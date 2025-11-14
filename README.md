@@ -17,10 +17,21 @@ React Native bridge for AMap (高德地图) iOS/Android SDK with full New Archit
 ## Installation
 
 ```sh
-npm install react-native-amap
+npm install @jindun619/react-native-amap
 # or
-yarn add react-native-amap
+yarn add @jindun619/react-native-amap
 ```
+
+### Getting Your API Keys
+
+You need to obtain API keys from AMap:
+
+1. Go to [AMap Developer Console](https://console.amap.com/)
+2. Create an account or sign in
+3. Create a new application
+4. Get your iOS and Android API keys (they are different)
+
+**Important**: iOS and Android require separate API keys from AMap.
 
 ### iOS Setup
 
@@ -31,7 +42,75 @@ yarn add react-native-amap
 <string>YOUR_AMAP_API_KEY</string>
 ```
 
-2. Install pods:
+2. Add location permissions to `Info.plist`:
+
+```xml
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>We need your location to show your position on the map</string>
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>We need your location to show your position on the map</string>
+```
+
+3. Add App Transport Security exception for AMap domains in `Info.plist`:
+
+```xml
+<key>NSAppTransportSecurity</key>
+<dict>
+  <key>NSExceptionDomains</key>
+  <dict>
+    <key>amap.com</key>
+    <dict>
+      <key>NSIncludesSubdomains</key>
+      <true/>
+      <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+      <true/>
+    </dict>
+  </dict>
+</dict>
+```
+
+4. **CRITICAL**: Initialize AMap SDK in your `AppDelegate`. Add this code to `AppDelegate.mm` (or `AppDelegate.swift`):
+
+**For Objective-C (AppDelegate.mm):**
+```objc
+#import <AMapFoundationKit/AMapFoundationKit.h>
+#import <MAMapKit/MAMapKit.h>
+
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+  // Configure AMap SDK privacy compliance (MUST be called before MAMapView instantiation)
+  [MAMapView updatePrivacyShow:AMapPrivacyShowStatusDidShow privacyInfo:AMapPrivacyInfoStatusDidContain];
+  [MAMapView updatePrivacyAgree:AMapPrivacyAgreeStatusDidAgree];
+
+  // Enable HTTPS
+  [AMapServices sharedServices].enableHTTPS = YES;
+
+  // ... rest of your AppDelegate code
+}
+```
+
+**For Swift (AppDelegate.swift):**
+```swift
+import AMapFoundationKit
+import MAMapKit
+
+func application(
+  _ application: UIApplication,
+  didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+) -> Bool {
+  // Configure AMap SDK privacy compliance (MUST be called before MAMapView instantiation)
+  MAMapView.updatePrivacyShow(.didShow, privacyInfo: .didContain)
+  MAMapView.updatePrivacyAgree(.didAgree)
+
+  // Enable HTTPS
+  AMapServices.shared().enableHTTPS = true
+
+  // ... rest of your AppDelegate code
+  return true
+}
+```
+
+5. Install pods:
 
 ```sh
 cd ios && pod install
@@ -39,21 +118,47 @@ cd ios && pod install
 
 ### Android Setup
 
-Add your AMap API key to `AndroidManifest.xml`:
+1. Add AMap Maven repository to your project-level `android/build.gradle`:
+
+```gradle
+allprojects {
+  repositories {
+    // ... other repositories
+    maven { url "https://maven.aliyun.com/repository/public" }
+  }
+}
+```
+
+2. Add required permissions to `AndroidManifest.xml`:
 
 ```xml
-<application>
-  <meta-data
-    android:name="com.amap.api.v2.apikey"
-    android:value="YOUR_AMAP_API_KEY" />
-</application>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <!-- Required permissions -->
+  <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+  <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+  <application>
+    <!-- AMap API Key -->
+    <meta-data
+      android:name="com.amap.api.v2.apikey"
+      android:value="YOUR_AMAP_API_KEY" />
+
+    <!-- ... rest of your application config -->
+  </application>
+</manifest>
 ```
 
 ## Basic Usage
 
 ```tsx
 import React, { useRef } from 'react';
-import AmapView, { type AmapViewHandle } from 'react-native-amap';
+import { AmapView, type AmapViewHandle } from '@jindun619/react-native-amap';
 
 export default function App() {
   const mapRef = useRef<AmapViewHandle>(null);
@@ -311,7 +416,7 @@ interface ClusterPressEvent {
 ```tsx
 import React, { useRef, useState } from 'react';
 import { View, Button, StyleSheet } from 'react-native';
-import AmapView, { type AmapViewHandle } from 'react-native-amap';
+import { AmapView, type AmapViewHandle } from '@jindun619/react-native-amap';
 
 export default function App() {
   const mapRef = useRef<AmapViewHandle>(null);
@@ -370,11 +475,51 @@ const styles = StyleSheet.create({
 });
 ```
 
+## Troubleshooting
+
+### Map is not displaying
+
+**Most common issue**: Missing AMap SDK initialization in AppDelegate (iOS)
+
+Make sure you added the privacy compliance and HTTPS configuration in `AppDelegate.mm` or `AppDelegate.swift`:
+
+```swift
+MAMapView.updatePrivacyShow(.didShow, privacyInfo: .didContain)
+MAMapView.updatePrivacyAgree(.didAgree)
+AMapServices.shared().enableHTTPS = true
+```
+
+**Other common issues**:
+
+1. **Invalid API Key**: Make sure you're using the correct API key for iOS/Android
+2. **Missing permissions**: Ensure all required permissions are added to AndroidManifest.xml
+3. **Missing Maven repository**: Android needs the AMap Maven repository in build.gradle
+4. **Pod install**: iOS requires running `pod install` after installation
+5. **Clean rebuild**: Try cleaning and rebuilding the project:
+   ```sh
+   # iOS
+   cd ios && rm -rf Pods Podfile.lock && pod install
+
+   # Android
+   cd android && ./gradlew clean
+   ```
+
+### Map displays but crashes on interaction
+
+This is usually due to missing privacy compliance setup on iOS. Make sure the privacy methods are called **before** any map view is created.
+
+### Location not showing
+
+1. Check that location permissions are granted
+2. Verify `showsUserLocation={true}` prop is set
+3. On iOS, ensure Info.plist has location usage descriptions
+
 ## Requirements
 
 - React Native >= 0.81.0 (New Architecture)
 - iOS >= 12.0
 - Android >= API 21
+- AMap API Keys (separate for iOS and Android)
 
 ## License
 
