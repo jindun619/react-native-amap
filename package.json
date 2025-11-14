@@ -1,6 +1,6 @@
 {
   "name": "@jindun619/react-native-amap",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "React Native bridge for Amap ios/android sdk.",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
