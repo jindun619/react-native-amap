@@ -1,0 +1,30 @@
+# Example app
+example/
+
+# Tests
+**/__tests__/
+**/__fixtures__/
+**/__mocks__/
+*.test.ts
+*.test.tsx
+
+# Build
+android/build/
+ios/build/
+*.xcworkspace/xcuserdata
+*.xcodeproj/xcuserdata
+
+# Dependencies
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Misc
+.DS_Store
+*.log
+.git/
+.github/

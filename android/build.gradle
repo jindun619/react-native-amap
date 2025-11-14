@@ -67,6 +67,8 @@ android {
 repositories {
   mavenCentral()
   google()
+  // AMap SDK repository
+  maven { url "https://maven.aliyun.com/repository/public" }
 }
 
 def kotlin_version = getExtOrDefault("kotlinVersion")
@@ -74,4 +76,8 @@ def kotlin_version = getExtOrDefault("kotlinVersion")
 dependencies {
   implementation "com.facebook.react:react-android"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+
+  // AMap 3D SDK
+  implementation "com.amap.api:3dmap:10.0.700"
+  implementation "com.amap.api:location:6.4.5"
 }

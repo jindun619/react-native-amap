@@ -1,32 +1,380 @@
 # react-native-amap
 
-React Native bridge for Amap ios/android sdk.
+React Native bridge for AMap (高德地图) iOS/Android SDK with full New Architecture (Fabric + TurboModules) support.
+
+## Features
+
+- ✅ **New Architecture Ready** - Full support for React Native 0.81+ with Fabric and TurboModules
+- 🗺️ **Map Display** - Standard and satellite map types with full gesture controls
+- 📍 **Markers** - Add, remove, and customize markers with callouts
+- 🎨 **Custom Icons** - Support for custom marker icons from URLs or local assets
+- 🔢 **Marker Clustering** - Automatic marker clustering with customizable appearance
+- 📐 **Overlays** - Polylines, polygons, and circles with customizable styles
+- 📱 **User Location** - Show user's current location on the map
+- 🎯 **Camera Control** - Programmatic camera positioning with smooth animations
+- 📡 **Events** - Rich event system for map interactions
 
 ## Installation
 
-
 ```sh
 npm install react-native-amap
+# or
+yarn add react-native-amap
 ```
 
+### iOS Setup
 
-## Usage
+1. Add your AMap API key to `Info.plist`:
 
-
-```js
-import { AmapView } from "react-native-amap";
-
-// ...
-
-<AmapView color="tomato" />
+```xml
+<key>AMapApiKey</key>
+<string>YOUR_AMAP_API_KEY</string>
 ```
 
+2. Install pods:
 
-## Contributing
+```sh
+cd ios && pod install
+```
 
-- [Development workflow](CONTRIBUTING.md#development-workflow)
-- [Sending a pull request](CONTRIBUTING.md#sending-a-pull-request)
-- [Code of conduct](CODE_OF_CONDUCT.md)
+### Android Setup
+
+Add your AMap API key to `AndroidManifest.xml`:
+
+```xml
+<application>
+  <meta-data
+    android:name="com.amap.api.v2.apikey"
+    android:value="YOUR_AMAP_API_KEY" />
+</application>
+```
+
+## Basic Usage
+
+```tsx
+import React, { useRef } from 'react';
+import AmapView, { type AmapViewHandle } from 'react-native-amap';
+
+export default function App() {
+  const mapRef = useRef<AmapViewHandle>(null);
+
+  return (
+    <AmapView
+      ref={mapRef}
+      style={{ flex: 1 }}
+      mapType="standard"
+      showsUserLocation={true}
+      onMapReady={() => console.log('Map is ready!')}
+    />
+  );
+}
+```
+
+## API Reference
+
+### Props
+
+#### Map Configuration
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `mapType` | `'standard' \| 'satellite'` | `'standard'` | Map display type |
+| `showsBuildings` | `boolean` | `true` | Show 3D buildings |
+| `showsTraffic` | `boolean` | `false` | Show traffic layer |
+| `showsLabels` | `boolean` | `true` | Show text labels |
+| `showsUserLocation` | `boolean` | `false` | Show user's location |
+
+#### Interaction Controls
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `zoomEnabled` | `boolean` | `true` | Enable pinch to zoom |
+| `scrollEnabled` | `boolean` | `true` | Enable pan gestures |
+| `rotateEnabled` | `boolean` | `true` | Enable rotation gestures |
+| `tiltEnabled` | `boolean` | `true` | Enable 3D tilt gestures |
+
+#### Marker Features
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `clusteringEnabled` | `boolean` | `false` | Enable automatic marker clustering |
+
+#### Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `onMapReady` | `void` | Called when map is loaded |
+| `onRegionChange` | `RegionChangeEvent` | Called when visible region changes |
+| `onMapPress` | `MapPressEvent` | Called when map is tapped |
+| `onMapLongPress` | `MapPressEvent` | Called when map is long pressed |
+| `onMarkerPress` | `MarkerPressEvent` | Called when marker is tapped |
+| `onClusterPress` | `ClusterPressEvent` | Called when marker cluster is tapped |
+
+### Methods
+
+Access these methods via ref:
+
+```tsx
+const mapRef = useRef<AmapViewHandle>(null);
+```
+
+#### Camera Control
+
+```tsx
+// Animate to a specific location
+await mapRef.current?.animateToRegion(
+  39.9042,    // latitude
+  116.4074,   // longitude
+  15,         // zoom level
+  1000        // duration in ms (optional)
+);
+
+// Set camera position (no animation)
+await mapRef.current?.setCamera({
+  latitude: 39.9042,
+  longitude: 116.4074,
+  zoom: 15,
+  tilt: 45,      // optional
+  rotation: 90   // optional
+});
+```
+
+#### Markers
+
+```tsx
+// Add a marker
+await mapRef.current?.addMarker({
+  id: 'marker-1',
+  coordinate: { latitude: 39.9042, longitude: 116.4074 },
+  title: 'Beijing',
+  subtitle: 'Capital of China',
+  showsCallout: true,
+  icon: 'https://example.com/icon.png' // optional custom icon
+});
+
+// Remove a marker
+await mapRef.current?.removeMarker('marker-1');
+
+// Clear all markers
+await mapRef.current?.clearMarkers();
+
+// Show/hide marker callout
+await mapRef.current?.showCallout('marker-1');
+await mapRef.current?.hideCallout('marker-1');
+```
+
+#### Custom Marker Icons
+
+Markers support custom icons from various sources:
+
+```tsx
+// From URL
+await mapRef.current?.addMarker({
+  id: 'marker-url',
+  coordinate: { latitude: 39.9042, longitude: 116.4074 },
+  icon: 'https://example.com/marker-icon.png'
+});
+
+// From local asset (iOS)
+await mapRef.current?.addMarker({
+  id: 'marker-asset',
+  coordinate: { latitude: 39.9042, longitude: 116.4074 },
+  icon: 'marker_icon' // Name of image in Assets.xcassets
+});
+
+// From drawable resource (Android)
+await mapRef.current?.addMarker({
+  id: 'marker-drawable',
+  coordinate: { latitude: 39.9042, longitude: 116.4074 },
+  icon: 'marker_icon' // Name of drawable resource
+});
+```
+
+#### Marker Clustering
+
+Enable clustering to group nearby markers:
+
+```tsx
+<AmapView
+  ref={mapRef}
+  clusteringEnabled={true}
+  onClusterPress={(event) => {
+    console.log(`Cluster with ${event.markerCount} markers`);
+    console.log(`Location: ${event.coordinate.latitude}, ${event.coordinate.longitude}`);
+  }}
+/>
+```
+
+Clustering features:
+- Automatic grouping of markers within 60 pixels
+- Purple cluster markers with marker count
+- Custom `onClusterPress` event
+- Re-clusters automatically when map moves
+
+#### Overlays
+
+##### Polyline
+
+```tsx
+await mapRef.current?.addPolyline({
+  id: 'polyline-1',
+  coordinates: [
+    { latitude: 39.9042, longitude: 116.4074 },
+    { latitude: 39.9142, longitude: 116.4174 },
+    { latitude: 39.9242, longitude: 116.4274 }
+  ],
+  strokeColor: '#FF0000',
+  strokeWidth: 5
+});
+
+await mapRef.current?.removePolyline('polyline-1');
+await mapRef.current?.clearPolylines();
+```
+
+##### Polygon
+
+```tsx
+await mapRef.current?.addPolygon({
+  id: 'polygon-1',
+  coordinates: [
+    { latitude: 39.9042, longitude: 116.4074 },
+    { latitude: 39.9142, longitude: 116.4174 },
+    { latitude: 39.9242, longitude: 116.4074 }
+  ],
+  strokeColor: '#00FF00',
+  strokeWidth: 3,
+  fillColor: '#0000FF80'
+});
+
+await mapRef.current?.removePolygon('polygon-1');
+await mapRef.current?.clearPolygons();
+```
+
+##### Circle
+
+```tsx
+await mapRef.current?.addCircle({
+  id: 'circle-1',
+  center: { latitude: 39.9042, longitude: 116.4074 },
+  radius: 1000, // meters
+  strokeColor: '#FF0000',
+  strokeWidth: 2,
+  fillColor: '#FF000040'
+});
+
+await mapRef.current?.removeCircle('circle-1');
+await mapRef.current?.clearCircles();
+```
+
+## Type Definitions
+
+```typescript
+interface LatLng {
+  latitude: number;
+  longitude: number;
+}
+
+interface Marker {
+  id: string;
+  coordinate: LatLng;
+  title?: string;
+  subtitle?: string;
+  showsCallout?: boolean;
+  icon?: string | number; // URL, asset name, or require()
+}
+
+interface MapPressEvent {
+  coordinate: LatLng;
+}
+
+interface MarkerPressEvent {
+  id: string;
+  coordinate: LatLng;
+}
+
+interface RegionChangeEvent {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+  zoom: number;
+}
+
+interface ClusterPressEvent {
+  coordinate: LatLng;
+  markerCount: number;
+}
+```
+
+## Complete Example
+
+```tsx
+import React, { useRef, useState } from 'react';
+import { View, Button, StyleSheet } from 'react-native';
+import AmapView, { type AmapViewHandle } from 'react-native-amap';
+
+export default function App() {
+  const mapRef = useRef<AmapViewHandle>(null);
+  const [clusteringEnabled, setClusteringEnabled] = useState(false);
+  const [markerCount, setMarkerCount] = useState(0);
+
+  const handleAddMarker = () => {
+    const id = `marker-${markerCount}`;
+    mapRef.current?.addMarker({
+      id,
+      coordinate: {
+        latitude: 39.9042 + (Math.random() - 0.5) * 0.1,
+        longitude: 116.4074 + (Math.random() - 0.5) * 0.1
+      },
+      title: `Marker ${markerCount + 1}`,
+      subtitle: `ID: ${id}`,
+      icon: 'https://example.com/custom-icon.png' // Optional
+    });
+    setMarkerCount(markerCount + 1);
+  };
+
+  const handleGoToBeijing = () => {
+    mapRef.current?.animateToRegion(39.9042, 116.4074, 12, 1000);
+  };
+
+  return (
+    <View style={styles.container}>
+      <AmapView
+        ref={mapRef}
+        style={styles.map}
+        mapType="standard"
+        showsUserLocation={true}
+        clusteringEnabled={clusteringEnabled}
+        onMapReady={() => console.log('Map ready!')}
+        onMarkerPress={(event) => console.log('Marker pressed:', event.id)}
+        onClusterPress={(event) =>
+          console.log(`Cluster: ${event.markerCount} markers`)
+        }
+      />
+      <View style={styles.controls}>
+        <Button title="Add Marker" onPress={handleAddMarker} />
+        <Button title="Go to Beijing" onPress={handleGoToBeijing} />
+        <Button
+          title={clusteringEnabled ? 'Disable Clustering' : 'Enable Clustering'}
+          onPress={() => setClusteringEnabled(!clusteringEnabled)}
+        />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  map: { flex: 1 },
+  controls: { position: 'absolute', bottom: 20, left: 20, right: 20 }
+});
+```
+
+## Requirements
+
+- React Native >= 0.81.0 (New Architecture)
+- iOS >= 12.0
+- Android >= API 21
 
 ## License
 

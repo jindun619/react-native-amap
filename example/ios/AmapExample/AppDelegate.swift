@@ -2,6 +2,8 @@ import UIKit
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+import AMapFoundationKit
+import MAMapKit
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -14,6 +16,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    // Configure AMap SDK privacy compliance (MUST be called before MAMapView instantiation)
+    // Required by Chinese law - show privacy policy dialog to users in production
+    MAMapView.updatePrivacyShow(.didShow, privacyInfo: .didContain)
+    MAMapView.updatePrivacyAgree(.didAgree)
+
+    // Enable HTTPS
+    AMapServices.shared().enableHTTPS = true
+
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()

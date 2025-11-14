@@ -14,6 +14,8 @@ class AmapViewPackage : ReactPackage {
   }
 
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-    return emptyList()
+    val modules: MutableList<NativeModule> = ArrayList()
+    modules.add(AmapModule(reactContext))
+    return modules
   }
 }

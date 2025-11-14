@@ -2,7 +2,8 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "react-native-amap": ["./src/index"]
+      "react-native-amap": ["./src/index"],
+      "@jindun619/react-native-amap": ["./src/index"]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

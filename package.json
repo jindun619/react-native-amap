@@ -1,6 +1,6 @@
 {
-  "name": "react-native-amap",
-  "version": "0.1.0",
+  "name": "@jindun619/react-native-amap",
+  "version": "1.0.1",
   "description": "React Native bridge for Amap ios/android sdk.",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
@@ -38,7 +38,8 @@
     "typecheck": "tsc",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
     "release": "release-it --only-version",
-    "test": "jest"
+    "test": "jest",
+    "test:ios": "yarn example test:ios"
   },
   "keywords": [
     "react-native",
