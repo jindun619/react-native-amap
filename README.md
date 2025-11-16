@@ -1,10 +1,42 @@
 # react-native-amap
 
-React Native bridge for AMap (高德地图) iOS/Android SDK with full New Architecture (Fabric + TurboModules) support.
+[![npm version](https://img.shields.io/npm/v/@jindun619/react-native-amap.svg)](https://www.npmjs.com/package/@jindun619/react-native-amap)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+React Native bridge for AMap (高德地图) iOS/Android SDK with full **New Architecture (Fabric)** support and **built-in Expo config plugin**.
+
+<div align="center">
+  <img src="https://user-images.githubusercontent.com/placeholder/demo.gif" alt="Demo" width="300"/>
+</div>
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+  - [Expo Managed Workflow](#expo-managed-workflow-recommended)
+  - [Bare React Native](#bare-react-native)
+- [Getting Your API Keys](#getting-your-api-keys)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [API Reference](#api-reference)
+  - [Props](#props)
+  - [Methods](#methods)
+  - [Events](#events)
+  - [Types](#types)
+- [Examples](#examples)
+- [Troubleshooting](#troubleshooting)
+- [Requirements](#requirements)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
 
 ## Features
 
 - ✅ **New Architecture Ready** - Full support for React Native 0.81+ with Fabric and TurboModules
+- 🎯 **Expo Config Plugin** - Zero-config setup for Expo managed workflow
 - 🗺️ **Map Display** - Standard and satellite map types with full gesture controls
 - 📍 **Markers** - Add, remove, and customize markers with callouts
 - 🎨 **Custom Icons** - Support for custom marker icons from URLs or local assets
@@ -14,7 +46,80 @@ React Native bridge for AMap (高德地图) iOS/Android SDK with full New Archit
 - 🎯 **Camera Control** - Programmatic camera positioning with smooth animations
 - 📡 **Events** - Rich event system for map interactions
 
+---
+
 ## Installation
+
+### Expo Managed Workflow (Recommended)
+
+The easiest way to use this library in Expo projects - **just 2 steps**!
+
+#### Step 1: Install the package
+
+```sh
+npx expo install @jindun619/react-native-amap
+```
+
+The config plugin will be **automatically detected** by Expo CLI!
+
+#### Step 2: Add your API keys
+
+**Option A: Using environment variables (Recommended)**
+
+Create a `.env` file in your project root:
+
+```bash
+# .env (add this file to .gitignore!)
+EXPO_PUBLIC_AMAP_IOS_API_KEY=your_ios_api_key_here
+EXPO_PUBLIC_AMAP_ANDROID_API_KEY=your_android_api_key_here
+```
+
+**Option B: Using app.config.js**
+
+```javascript
+// app.config.js
+export default {
+  expo: {
+    // ... other config
+    plugins: [
+      [
+        '@jindun619/react-native-amap',
+        {
+          iosApiKey: 'your_ios_api_key',
+          androidApiKey: 'your_android_api_key',
+          // Optional: custom permission descriptions
+          iosLocationWhenInUseDescription: 'We need your location to show your position on the map',
+          iosLocationAlwaysDescription: 'We need your location to show your position on the map'
+        }
+      ]
+    ]
+  }
+};
+```
+
+#### Step 3: Rebuild your app
+
+```sh
+# Prebuild to apply native changes
+npx expo prebuild
+
+# Run on your device/simulator
+npx expo run:ios
+# or
+npx expo run:android
+```
+
+**That's it!** 🎉 The config plugin automatically handles:
+- ✅ iOS Info.plist configuration (API key, location permissions, App Transport Security)
+- ✅ iOS AppDelegate initialization (AMap SDK privacy compliance)
+- ✅ Android AndroidManifest.xml setup (API key, permissions)
+- ✅ Android build.gradle Maven repository configuration
+
+---
+
+### Bare React Native
+
+#### Step 1: Install the package
 
 ```sh
 npm install @jindun619/react-native-amap
@@ -22,27 +127,22 @@ npm install @jindun619/react-native-amap
 yarn add @jindun619/react-native-amap
 ```
 
-### Getting Your API Keys
+#### Step 2: iOS Setup
 
-You need to obtain API keys from AMap:
+1. **Install pods:**
 
-1. Go to [AMap Developer Console](https://console.amap.com/)
-2. Create an account or sign in
-3. Create a new application
-4. Get your iOS and Android API keys (they are different)
+```sh
+cd ios && pod install
+```
 
-**Important**: iOS and Android require separate API keys from AMap.
-
-### iOS Setup
-
-1. Add your AMap API key to `Info.plist`:
+2. **Add AMap API key to `Info.plist`:**
 
 ```xml
 <key>AMapApiKey</key>
-<string>YOUR_AMAP_API_KEY</string>
+<string>YOUR_AMAP_IOS_API_KEY</string>
 ```
 
-2. Add location permissions to `Info.plist`:
+3. **Add location permissions to `Info.plist`:**
 
 ```xml
 <key>NSLocationWhenInUseUsageDescription</key>
@@ -51,7 +151,7 @@ You need to obtain API keys from AMap:
 <string>We need your location to show your position on the map</string>
 ```
 
-3. Add App Transport Security exception for AMap domains in `Info.plist`:
+4. **Add App Transport Security exception to `Info.plist`:**
 
 ```xml
 <key>NSAppTransportSecurity</key>
@@ -69,9 +169,12 @@ You need to obtain API keys from AMap:
 </dict>
 ```
 
-4. **CRITICAL**: Initialize AMap SDK in your `AppDelegate`. Add this code to `AppDelegate.mm` (or `AppDelegate.swift`):
+5. **⚠️ CRITICAL: Initialize AMap SDK in AppDelegate**
 
-**For Objective-C (AppDelegate.mm):**
+Without this step, the map will not display!
+
+**For Objective-C (`AppDelegate.mm`):**
+
 ```objc
 #import <AMapFoundationKit/AMapFoundationKit.h>
 #import <MAMapKit/MAMapKit.h>
@@ -81,15 +184,15 @@ You need to obtain API keys from AMap:
   // Configure AMap SDK privacy compliance (MUST be called before MAMapView instantiation)
   [MAMapView updatePrivacyShow:AMapPrivacyShowStatusDidShow privacyInfo:AMapPrivacyInfoStatusDidContain];
   [MAMapView updatePrivacyAgree:AMapPrivacyAgreeStatusDidAgree];
-
-  // Enable HTTPS
-  [AMapServices sharedServices].enableHTTPS = YES;
+  [[AMapServices sharedServices] setEnableHTTPS:YES];
 
   // ... rest of your AppDelegate code
+  return YES;
 }
 ```
 
-**For Swift (AppDelegate.swift):**
+**For Swift (`AppDelegate.swift`):**
+
 ```swift
 import AMapFoundationKit
 import MAMapKit
@@ -98,11 +201,9 @@ func application(
   _ application: UIApplication,
   didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
 ) -> Bool {
-  // Configure AMap SDK privacy compliance (MUST be called before MAMapView instantiation)
+  // Configure AMap SDK privacy compliance
   MAMapView.updatePrivacyShow(.didShow, privacyInfo: .didContain)
   MAMapView.updatePrivacyAgree(.didAgree)
-
-  // Enable HTTPS
   AMapServices.shared().enableHTTPS = true
 
   // ... rest of your AppDelegate code
@@ -110,15 +211,9 @@ func application(
 }
 ```
 
-5. Install pods:
+#### Step 3: Android Setup
 
-```sh
-cd ios && pod install
-```
-
-### Android Setup
-
-1. Add AMap Maven repository to your project-level `android/build.gradle`:
+1. **Add AMap Maven repository to `android/build.gradle`:**
 
 ```gradle
 allprojects {
@@ -129,7 +224,7 @@ allprojects {
 }
 ```
 
-2. Add required permissions to `AndroidManifest.xml`:
+2. **Add permissions and API key to `AndroidManifest.xml`:**
 
 ```xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -147,33 +242,142 @@ allprojects {
     <!-- AMap API Key -->
     <meta-data
       android:name="com.amap.api.v2.apikey"
-      android:value="YOUR_AMAP_API_KEY" />
+      android:value="YOUR_AMAP_ANDROID_API_KEY" />
 
     <!-- ... rest of your application config -->
   </application>
 </manifest>
 ```
 
-## Basic Usage
+---
+
+## Getting Your API Keys
+
+You need separate API keys for iOS and Android from AMap:
+
+1. Go to [AMap Developer Console](https://console.amap.com/)
+2. Create an account or sign in
+3. Create a new application
+4. Get your **iOS** and **Android** API keys (they are different!)
+
+**Important**:
+- iOS and Android require **separate API keys**
+- Keep your API keys secure (use `.env` file and add it to `.gitignore`)
+
+---
+
+## Quick Start
+
+### Basic Example
 
 ```tsx
 import React, { useRef } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { AmapView, type AmapViewHandle } from '@jindun619/react-native-amap';
 
 export default function App() {
   const mapRef = useRef<AmapViewHandle>(null);
 
   return (
+    <View style={styles.container}>
+      <AmapView
+        ref={mapRef}
+        style={styles.map}
+        mapType="standard"
+        showsUserLocation={true}
+        onMapReady={() => console.log('Map is ready!')}
+        onMapPress={(event) => console.log('Map pressed:', event.coordinate)}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  map: { flex: 1 },
+});
+```
+
+### Adding Markers
+
+```tsx
+import { useEffect, useRef } from 'react';
+import { AmapView, type AmapViewHandle } from '@jindun619/react-native-amap';
+
+export default function MapWithMarkers() {
+  const mapRef = useRef<AmapViewHandle>(null);
+
+  useEffect(() => {
+    // Add marker when map is ready
+    const addMarker = async () => {
+      await mapRef.current?.addMarker({
+        id: 'beijing',
+        coordinate: { latitude: 39.9042, longitude: 116.4074 },
+        title: 'Beijing',
+        subtitle: 'Capital of China',
+        showsCallout: true,
+      });
+
+      // Animate camera to marker
+      await mapRef.current?.animateToRegion(39.9042, 116.4074, 15, 1000);
+    };
+
+    addMarker();
+  }, []);
+
+  return (
     <AmapView
       ref={mapRef}
       style={{ flex: 1 }}
-      mapType="standard"
       showsUserLocation={true}
-      onMapReady={() => console.log('Map is ready!')}
+      onMarkerPress={(event) => console.log('Marker pressed:', event.id)}
     />
   );
 }
 ```
+
+---
+
+## Configuration
+
+### Expo Config Plugin Options
+
+When using Expo, you can configure the plugin in `app.config.js`:
+
+```javascript
+export default {
+  expo: {
+    plugins: [
+      [
+        '@jindun619/react-native-amap',
+        {
+          // Required: API keys
+          iosApiKey: 'your_ios_key',           // or use EXPO_PUBLIC_AMAP_IOS_API_KEY env var
+          androidApiKey: 'your_android_key',   // or use EXPO_PUBLIC_AMAP_ANDROID_API_KEY env var
+
+          // Optional: Custom permission descriptions
+          iosLocationWhenInUseDescription: 'Custom description for location permission',
+          iosLocationAlwaysDescription: 'Custom description for always location permission',
+        }
+      ]
+    ]
+  }
+};
+```
+
+### Environment Variables
+
+For better security, use environment variables:
+
+```bash
+# .env
+EXPO_PUBLIC_AMAP_IOS_API_KEY=your_ios_key
+EXPO_PUBLIC_AMAP_ANDROID_API_KEY=your_android_key
+```
+
+The plugin will automatically read these variables if API keys are not provided in the config.
+
+---
 
 ## API Reference
 
@@ -204,16 +408,7 @@ export default function App() {
 |------|------|---------|-------------|
 | `clusteringEnabled` | `boolean` | `false` | Enable automatic marker clustering |
 
-#### Events
-
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `onMapReady` | `void` | Called when map is loaded |
-| `onRegionChange` | `RegionChangeEvent` | Called when visible region changes |
-| `onMapPress` | `MapPressEvent` | Called when map is tapped |
-| `onMapLongPress` | `MapPressEvent` | Called when map is long pressed |
-| `onMarkerPress` | `MarkerPressEvent` | Called when marker is tapped |
-| `onClusterPress` | `ClusterPressEvent` | Called when marker cluster is tapped |
+---
 
 ### Methods
 
@@ -228,150 +423,106 @@ const mapRef = useRef<AmapViewHandle>(null);
 ```tsx
 // Animate to a specific location
 await mapRef.current?.animateToRegion(
-  39.9042,    // latitude
-  116.4074,   // longitude
-  15,         // zoom level
-  1000        // duration in ms (optional)
+  latitude: number,
+  longitude: number,
+  zoom: number,
+  duration?: number  // milliseconds (optional)
 );
 
 // Set camera position (no animation)
 await mapRef.current?.setCamera({
-  latitude: 39.9042,
-  longitude: 116.4074,
-  zoom: 15,
-  tilt: 45,      // optional
-  rotation: 90   // optional
+  latitude: number,
+  longitude: number,
+  zoom: number,
+  tilt?: number,      // 0-60 degrees (optional)
+  rotation?: number   // 0-360 degrees (optional)
 });
 ```
 
-#### Markers
+#### Marker Management
 
 ```tsx
 // Add a marker
 await mapRef.current?.addMarker({
-  id: 'marker-1',
-  coordinate: { latitude: 39.9042, longitude: 116.4074 },
-  title: 'Beijing',
-  subtitle: 'Capital of China',
-  showsCallout: true,
-  icon: 'https://example.com/icon.png' // optional custom icon
+  id: string,
+  coordinate: { latitude: number, longitude: number },
+  title?: string,
+  subtitle?: string,
+  showsCallout?: boolean,
+  icon?: string  // URL, asset name, or require()
 });
 
 // Remove a marker
-await mapRef.current?.removeMarker('marker-1');
+await mapRef.current?.removeMarker(id: string);
 
 // Clear all markers
 await mapRef.current?.clearMarkers();
 
 // Show/hide marker callout
-await mapRef.current?.showCallout('marker-1');
-await mapRef.current?.hideCallout('marker-1');
+await mapRef.current?.showCallout(id: string);
+await mapRef.current?.hideCallout(id: string);
 ```
-
-#### Custom Marker Icons
-
-Markers support custom icons from various sources:
-
-```tsx
-// From URL
-await mapRef.current?.addMarker({
-  id: 'marker-url',
-  coordinate: { latitude: 39.9042, longitude: 116.4074 },
-  icon: 'https://example.com/marker-icon.png'
-});
-
-// From local asset (iOS)
-await mapRef.current?.addMarker({
-  id: 'marker-asset',
-  coordinate: { latitude: 39.9042, longitude: 116.4074 },
-  icon: 'marker_icon' // Name of image in Assets.xcassets
-});
-
-// From drawable resource (Android)
-await mapRef.current?.addMarker({
-  id: 'marker-drawable',
-  coordinate: { latitude: 39.9042, longitude: 116.4074 },
-  icon: 'marker_icon' // Name of drawable resource
-});
-```
-
-#### Marker Clustering
-
-Enable clustering to group nearby markers:
-
-```tsx
-<AmapView
-  ref={mapRef}
-  clusteringEnabled={true}
-  onClusterPress={(event) => {
-    console.log(`Cluster with ${event.markerCount} markers`);
-    console.log(`Location: ${event.coordinate.latitude}, ${event.coordinate.longitude}`);
-  }}
-/>
-```
-
-Clustering features:
-- Automatic grouping of markers within 60 pixels
-- Purple cluster markers with marker count
-- Custom `onClusterPress` event
-- Re-clusters automatically when map moves
 
 #### Overlays
 
-##### Polyline
-
+**Polyline:**
 ```tsx
 await mapRef.current?.addPolyline({
-  id: 'polyline-1',
-  coordinates: [
-    { latitude: 39.9042, longitude: 116.4074 },
-    { latitude: 39.9142, longitude: 116.4174 },
-    { latitude: 39.9242, longitude: 116.4274 }
-  ],
-  strokeColor: '#FF0000',
-  strokeWidth: 5
+  id: string,
+  coordinates: Array<{ latitude: number, longitude: number }>,
+  strokeColor?: string,  // hex color (e.g., '#FF0000')
+  strokeWidth?: number   // in pixels
 });
 
-await mapRef.current?.removePolyline('polyline-1');
+await mapRef.current?.removePolyline(id: string);
 await mapRef.current?.clearPolylines();
 ```
 
-##### Polygon
-
+**Polygon:**
 ```tsx
 await mapRef.current?.addPolygon({
-  id: 'polygon-1',
-  coordinates: [
-    { latitude: 39.9042, longitude: 116.4074 },
-    { latitude: 39.9142, longitude: 116.4174 },
-    { latitude: 39.9242, longitude: 116.4074 }
-  ],
-  strokeColor: '#00FF00',
-  strokeWidth: 3,
-  fillColor: '#0000FF80'
+  id: string,
+  coordinates: Array<{ latitude: number, longitude: number }>,
+  strokeColor?: string,
+  strokeWidth?: number,
+  fillColor?: string  // hex color with alpha (e.g., '#FF000080')
 });
 
-await mapRef.current?.removePolygon('polygon-1');
+await mapRef.current?.removePolygon(id: string);
 await mapRef.current?.clearPolygons();
 ```
 
-##### Circle
-
+**Circle:**
 ```tsx
 await mapRef.current?.addCircle({
-  id: 'circle-1',
-  center: { latitude: 39.9042, longitude: 116.4074 },
-  radius: 1000, // meters
-  strokeColor: '#FF0000',
-  strokeWidth: 2,
-  fillColor: '#FF000040'
+  id: string,
+  center: { latitude: number, longitude: number },
+  radius: number,  // in meters
+  strokeColor?: string,
+  strokeWidth?: number,
+  fillColor?: string
 });
 
-await mapRef.current?.removeCircle('circle-1');
+await mapRef.current?.removeCircle(id: string);
 await mapRef.current?.clearCircles();
 ```
 
-## Type Definitions
+---
+
+### Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `onMapReady` | `void` | Called when map is loaded and ready |
+| `onRegionChange` | `RegionChangeEvent` | Called when visible region changes |
+| `onMapPress` | `MapPressEvent` | Called when map is tapped |
+| `onMapLongPress` | `MapPressEvent` | Called when map is long pressed |
+| `onMarkerPress` | `MarkerPressEvent` | Called when marker is tapped |
+| `onClusterPress` | `ClusterPressEvent` | Called when marker cluster is tapped |
+
+---
+
+### Types
 
 ```typescript
 interface LatLng {
@@ -385,7 +536,15 @@ interface Marker {
   title?: string;
   subtitle?: string;
   showsCallout?: boolean;
-  icon?: string | number; // URL, asset name, or require()
+  icon?: string | number;
+}
+
+interface CameraPosition {
+  latitude: number;
+  longitude: number;
+  zoom: number;
+  tilt?: number;      // 0-60 degrees
+  rotation?: number;  // 0-360 degrees
 }
 
 interface MapPressEvent {
@@ -409,9 +568,37 @@ interface ClusterPressEvent {
   coordinate: LatLng;
   markerCount: number;
 }
+
+interface Polyline {
+  id: string;
+  coordinates: LatLng[];
+  strokeColor?: string;
+  strokeWidth?: number;
+}
+
+interface Polygon {
+  id: string;
+  coordinates: LatLng[];
+  strokeColor?: string;
+  strokeWidth?: number;
+  fillColor?: string;
+}
+
+interface Circle {
+  id: string;
+  center: LatLng;
+  radius: number;  // in meters
+  strokeColor?: string;
+  strokeWidth?: number;
+  fillColor?: string;
+}
 ```
 
-## Complete Example
+---
+
+## Examples
+
+### Complete Example with All Features
 
 ```tsx
 import React, { useRef, useState } from 'react';
@@ -423,9 +610,9 @@ export default function App() {
   const [clusteringEnabled, setClusteringEnabled] = useState(false);
   const [markerCount, setMarkerCount] = useState(0);
 
-  const handleAddMarker = () => {
+  const handleAddMarker = async () => {
     const id = `marker-${markerCount}`;
-    mapRef.current?.addMarker({
+    await mapRef.current?.addMarker({
       id,
       coordinate: {
         latitude: 39.9042 + (Math.random() - 0.5) * 0.1,
@@ -433,13 +620,37 @@ export default function App() {
       },
       title: `Marker ${markerCount + 1}`,
       subtitle: `ID: ${id}`,
-      icon: 'https://example.com/custom-icon.png' // Optional
+      showsCallout: true,
     });
     setMarkerCount(markerCount + 1);
   };
 
-  const handleGoToBeijing = () => {
-    mapRef.current?.animateToRegion(39.9042, 116.4074, 12, 1000);
+  const handleAddPolyline = async () => {
+    await mapRef.current?.addPolyline({
+      id: 'route-1',
+      coordinates: [
+        { latitude: 39.9042, longitude: 116.4074 },
+        { latitude: 39.9142, longitude: 116.4174 },
+        { latitude: 39.9242, longitude: 116.4274 }
+      ],
+      strokeColor: '#FF0000',
+      strokeWidth: 5
+    });
+  };
+
+  const handleAddCircle = async () => {
+    await mapRef.current?.addCircle({
+      id: 'area-1',
+      center: { latitude: 39.9042, longitude: 116.4074 },
+      radius: 1000,
+      strokeColor: '#0000FF',
+      strokeWidth: 2,
+      fillColor: '#0000FF40'
+    });
+  };
+
+  const handleGoToBeijing = async () => {
+    await mapRef.current?.animateToRegion(39.9042, 116.4074, 12, 1000);
   };
 
   return (
@@ -449,15 +660,21 @@ export default function App() {
         style={styles.map}
         mapType="standard"
         showsUserLocation={true}
+        showsTraffic={false}
         clusteringEnabled={clusteringEnabled}
         onMapReady={() => console.log('Map ready!')}
+        onMapPress={(event) => console.log('Map pressed:', event.coordinate)}
         onMarkerPress={(event) => console.log('Marker pressed:', event.id)}
         onClusterPress={(event) =>
           console.log(`Cluster: ${event.markerCount} markers`)
         }
+        onRegionChange={(event) => console.log('Region changed:', event)}
       />
+
       <View style={styles.controls}>
         <Button title="Add Marker" onPress={handleAddMarker} />
+        <Button title="Add Polyline" onPress={handleAddPolyline} />
+        <Button title="Add Circle" onPress={handleAddCircle} />
         <Button title="Go to Beijing" onPress={handleGoToBeijing} />
         <Button
           title={clusteringEnabled ? 'Disable Clustering' : 'Enable Clustering'}
@@ -471,9 +688,54 @@ export default function App() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
-  controls: { position: 'absolute', bottom: 20, left: 20, right: 20 }
+  controls: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    gap: 10,
+  },
 });
 ```
+
+### Custom Marker Icons
+
+```tsx
+// From URL
+await mapRef.current?.addMarker({
+  id: 'marker-url',
+  coordinate: { latitude: 39.9042, longitude: 116.4074 },
+  icon: 'https://example.com/marker-icon.png'
+});
+
+// From local asset (iOS: Assets.xcassets, Android: drawable)
+await mapRef.current?.addMarker({
+  id: 'marker-asset',
+  coordinate: { latitude: 39.9042, longitude: 116.4074 },
+  icon: 'marker_icon'  // asset name without extension
+});
+```
+
+### Marker Clustering
+
+```tsx
+<AmapView
+  ref={mapRef}
+  clusteringEnabled={true}
+  onClusterPress={(event) => {
+    console.log(`Cluster with ${event.markerCount} markers`);
+    console.log(`Location: ${event.coordinate.latitude}, ${event.coordinate.longitude}`);
+  }}
+/>
+```
+
+Clustering features:
+- Automatic grouping of markers within 60 pixels
+- Purple cluster markers with marker count
+- Custom `onClusterPress` event
+- Re-clusters automatically when map moves
+
+---
 
 ## Troubleshooting
 
@@ -489,20 +751,44 @@ MAMapView.updatePrivacyAgree(.didAgree)
 AMapServices.shared().enableHTTPS = true
 ```
 
-**Other common issues**:
+**For Expo users**: The config plugin should handle this automatically. If the map still doesn't display:
+1. Run `npx expo prebuild --clean` to regenerate native code
+2. Rebuild your development build
+3. Check that your API keys are correctly set in `.env` or `app.config.js`
 
-1. **Invalid API Key**: Make sure you're using the correct API key for iOS/Android
-2. **Missing permissions**: Ensure all required permissions are added to AndroidManifest.xml
-3. **Missing Maven repository**: Android needs the AMap Maven repository in build.gradle
-4. **Pod install**: iOS requires running `pod install` after installation
-5. **Clean rebuild**: Try cleaning and rebuilding the project:
-   ```sh
-   # iOS
-   cd ios && rm -rf Pods Podfile.lock && pod install
+### Other common issues
 
-   # Android
-   cd android && ./gradlew clean
-   ```
+**1. Invalid API Key**
+- Make sure you're using the correct API key for iOS/Android
+- iOS and Android keys are different - don't mix them up!
+- Verify keys at [AMap Developer Console](https://console.amap.com/)
+
+**2. Missing permissions (Android)**
+- Ensure all required permissions are added to `AndroidManifest.xml`
+- For Expo: plugin adds permissions automatically
+
+**3. Missing Maven repository (Android)**
+- Android needs the AMap Maven repository in `build.gradle`
+- For Expo: plugin adds repository automatically
+
+**4. Pod install fails (iOS)**
+```sh
+cd ios
+rm -rf Pods Podfile.lock
+pod install --repo-update
+```
+
+**5. Clean rebuild**
+```sh
+# iOS
+cd ios && rm -rf Pods Podfile.lock && pod install && cd ..
+
+# Android
+cd android && ./gradlew clean && cd ..
+
+# Expo
+npx expo prebuild --clean
+```
 
 ### Map displays but crashes on interaction
 
@@ -512,7 +798,32 @@ This is usually due to missing privacy compliance setup on iOS. Make sure the pr
 
 1. Check that location permissions are granted
 2. Verify `showsUserLocation={true}` prop is set
-3. On iOS, ensure Info.plist has location usage descriptions
+3. On iOS, ensure `Info.plist` has location usage descriptions
+4. Test on a real device (simulators may not have location)
+
+### Expo: "Module not found" error
+
+```sh
+# Clear cache and restart
+npx expo start --clear
+
+# Or reinstall
+rm -rf node_modules
+npm install
+npx expo prebuild --clean
+```
+
+### Build errors after upgrading
+
+```sh
+# Clean everything and rebuild
+yarn clean
+rm -rf node_modules yarn.lock
+yarn install
+npx expo prebuild --clean
+```
+
+---
 
 ## Requirements
 
@@ -521,10 +832,38 @@ This is usually due to missing privacy compliance setup on iOS. Make sure the pr
 - Android >= API 21
 - AMap API Keys (separate for iOS and Android)
 
+**For Expo:**
+- Expo >= 54.0.0
+- Development Build or Standalone Build (not Expo Go)
+
+---
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+Please follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for commit messages.
+
+---
+
 ## License
 
 MIT
 
 ---
 
-Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
+## Acknowledgments
+
+- Built with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
+- Uses [AMap iOS SDK](https://lbs.amap.com/api/ios-sdk/summary)
+- Uses [AMap Android SDK](https://lbs.amap.com/api/android-sdk/summary)
+
+---
+
+**Made with ❤️ by [jindun619](https://github.com/jindun619)**
