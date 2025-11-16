@@ -4651,7 +4651,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/utils@npm:8.46.4":
+"@typescript-eslint/utils@npm:8.46.4, @typescript-eslint/utils@npm:^8.0.0":
   version: 8.46.4
   resolution: "@typescript-eslint/utils@npm:8.46.4"
   dependencies:
@@ -7467,6 +7467,24 @@ __metadata:
     jest:
       optional: true
   checksum: 10c0/b8b09f7d8ba3d84a8779a6e95702a6e4dce45ab034e4edf5ddb631e77cd38dcdf791dfd9228e0a0d1d80d1eb2d278deb62ad2ec39f10fb8fd43cec07304e0c38
+  languageName: node
+  linkType: hard
+
+"eslint-plugin-jest@npm:^29.1.0":
+  version: 29.1.0
+  resolution: "eslint-plugin-jest@npm:29.1.0"
+  dependencies:
+    "@typescript-eslint/utils": "npm:^8.0.0"
+  peerDependencies:
+    "@typescript-eslint/eslint-plugin": ^8.0.0
+    eslint: ^8.57.0 || ^9.0.0
+    jest: "*"
+  peerDependenciesMeta:
+    "@typescript-eslint/eslint-plugin":
+      optional: true
+    jest:
+      optional: true
+  checksum: 10c0/3fe5d4c35279025eb96bfb0adfad1b0eca03f5987db96adbe656279b5b4ed3eaa5240dd1876e54e7ea98b28acbd451256f8c7613cf2d2d6d3387f6360fcb3704
   languageName: node
   linkType: hard
 
@@ -13117,6 +13135,7 @@ __metadata:
     "@react-native/metro-config": "npm:0.81.1"
     "@react-native/typescript-config": "npm:0.81.1"
     "@types/react": "npm:^19.1.0"
+    eslint-plugin-jest: "npm:^29.1.0"
     react: "npm:19.1.0"
     react-native: "npm:0.81.1"
     react-native-builder-bob: "npm:^0.40.13"
